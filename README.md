@@ -84,7 +84,7 @@ FAQ Chatbot AI is an interactive chatbot application built with Streamlit that a
 ## Project Structure
 
 ```
-faq-chatbot-ai/
+faq-chatbot-ai-streamlit/
 ├── main.py                # Main application code
 ├── requirements.txt      # List of dependencies
 ├── .env                  # Environment variables file (not committed)
