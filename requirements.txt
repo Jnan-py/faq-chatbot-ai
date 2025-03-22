@@ -1,0 +1,9 @@
+streamlit
+PyPDF2
+python-docx
+python-dotenv
+google-generativeai
+pinecone-client
+langchain-google-genai
+langchain-pinecone
+phidata
