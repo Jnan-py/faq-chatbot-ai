@@ -1,4 +1,4 @@
-# FAQ Chatbot AI
+# FAQ Chatbot AI - Streamlit
 
 FAQ Chatbot AI is an interactive chatbot application built with Streamlit that allows users to upload FAQ files (JSON, TXT, PDF, DOCX), analyze their content, and chat with an AI assistant to ask questions based on the FAQ data. The app leverages modern AI and vector search technologies using Google Generative AI, Pinecone, and LangChain integrations to provide insightful answers and detailed reports.
 
@@ -35,8 +35,8 @@ FAQ Chatbot AI is an interactive chatbot application built with Streamlit that a
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/Jnan-py/faq-chatbot-ai.git
-   cd faq-chatbot-ai
+   git clone https://github.com/Jnan-py/faq-chatbot-ai-streamlit.git
+   cd faq-chatbot-ai-streamlit
    ```
 
 2. **Create a virtual environment and activate it:**
