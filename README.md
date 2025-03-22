@@ -52,8 +52,6 @@ FAQ Chatbot AI is an interactive chatbot application built with Streamlit that a
    pip install -r requirements.txt
    ```
 
-   _Note: The `requirements.txt` should include dependencies such as `streamlit`, `PyPDF2`, `python-docx`, `python-dotenv`, `google-generativeai`, `pinecone-client`, `langchain-google-genai`, `langchain-pinecone`, and `phi`._
-
 4. **Create a `.env` file in the project root and add your API keys:**
 
    ```env
