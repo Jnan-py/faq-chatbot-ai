@@ -246,12 +246,13 @@ def handle_query(query, history, faq_context, vector_store):
 
     classification_prompt = f"""
     You are an FAQ chatbot. Analyze the provided FAQ context and the user query.
-- If the query is not related to the topic of the FAQ context at all (i.e., less than 10% related), respond with "unrelated".
-- If the query is related to the FAQ context but the answer is not available in the FAQ context, then label it as "needs web search". If after attempting web search the answer is still not found, label it as "keep in db".        
+- If the query is not related to the topic of the FAQ context and also the history of the conversation, at all (i.e., less than 10% related), respond with "unrelated".
+- If the query is related to the FAQ context and also the history of the conversation, but the answer is not available in the FAQ context, then label it as "needs web search". If after attempting web search the answer is still not found, label it as "keep in db".        
 - If the query is answerable directly from the FAQ context, provide the answer using the context.
 - If it's a follow-up question (e.g., "Tell me more", "Can you explain further", etc.), label it as "follow up".
     FAQ Context: {faq_context}
     User Query: {query}
+    History : {history}
     """
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     classification_response = model.generate_content(classification_prompt).text.lower()
