@@ -4,7 +4,7 @@ import json
 import os
 import re
 import PyPDF2
-import docx
+# import docx
 from dotenv import load_dotenv
 import google.generativeai as genai
 from pinecone import Pinecone, ServerlessSpec
@@ -109,7 +109,7 @@ def show_login_signup():
 
 def handle_file_upload(pc):
     st.subheader("Upload New FAQ File")
-    uploaded_file = st.file_uploader("Choose a FAQ file (JSON, TXT, PDF, DOCX)", type=["json", "txt", "pdf", "docx"])
+    uploaded_file = st.file_uploader("Choose a FAQ file (JSON, TXT, PDF)", type=["json", "txt", "pdf", "docx"])
     file_name = st.text_input("Enter a name for this file (used as vector index name)")
     if st.button("Upload File") and uploaded_file and file_name:
         file_ext = os.path.splitext(uploaded_file.name)[1].lower()
@@ -129,10 +129,10 @@ def handle_file_upload(pc):
                 for page in pdf_reader.pages:
                     file_content += page.extract_text() + "\n"
                 faq_texts = [chunk.strip() for chunk in file_content.split("\n\n") if chunk.strip()]
-            elif file_ext == '.docx':
-                doc = docx.Document(uploaded_file)
-                file_content = "\n".join([para.text for para in doc.paragraphs])
-                faq_texts = [chunk.strip() for chunk in file_content.split("\n\n") if chunk.strip()]
+            # elif file_ext == '.docx':
+            #     doc = docx.Document(uploaded_file)
+            #     file_content = "\n".join([para.text for para in doc.paragraphs])
+            #     faq_texts = [chunk.strip() for chunk in file_content.split("\n\n") if chunk.strip()]
             else:
                 st.error("Unsupported file type.")
                 return
@@ -142,22 +142,24 @@ def handle_file_upload(pc):
        
         sanitized_name = re.sub('[^a-z0-9-]', '', file_name.strip().lower().replace(" ", "-"))
         file_index = f"faq-{sanitized_name}"
-               
-        if file_index not in [i['name'] for i in pc.list_indexes()]:
-            pc.create_index(
-                name=file_index,
-                dimension=768,
-                metric='cosine',
-                spec=ServerlessSpec(cloud='aws', region='us-east-1'),
-            )
-       
-        file_index_instance = pc.Index(file_index)
-        file_vector_store = PineconeVectorStore(index=file_index_instance, embedding=embeddings)
-        file_vector_store.add_texts(faq_texts)
-       
-        c.execute("INSERT INTO files (user_id, file_name, pinecone_index, file_content) VALUES (?, ?, ?, ?)",
-                  (st.session_state['user_id'], file_name, file_index, file_content))
-        conn.commit()
+        
+        with st.spinner("Uploading and processing file..."):
+            if file_index not in [i['name'] for i in pc.list_indexes()]:
+                pc.create_index(
+                    name=file_index,
+                    dimension=768,
+                    metric='cosine',
+                    spec=ServerlessSpec(cloud='aws', region='us-east-1'),
+                )
+        
+            file_index_instance = pc.Index(file_index)
+            file_vector_store = PineconeVectorStore(index=file_index_instance, embedding=embeddings)
+            file_vector_store.add_texts(faq_texts)
+        
+            c.execute("INSERT INTO files (user_id, file_name, pinecone_index, file_content) VALUES (?, ?, ?, ?)",
+                    (st.session_state['user_id'], file_name, file_index, file_content))
+            conn.commit()
+
         st.success("File uploaded and processed successfully!")
 
 def load_file_for_analysis(file_id):
@@ -246,6 +248,7 @@ def handle_query(query, history, faq_context, vector_store):
 
     classification_prompt = f"""
     You are an FAQ chatbot. Analyze the provided FAQ context and the user query.
+- If the query is more like the greeting, closing, or any other general conversation like 'Hello..', 'Greetings..', etc.., respond with "Greeting".
 - If the query is not related to the topic of the FAQ context and also the history of the conversation, at all (i.e., less than 10% related), respond with "unrelated".
 - If the query is related to the FAQ context and also the history of the conversation, but the answer is not available in the FAQ context, then label it as "needs web search". If after attempting web search the answer is still not found, label it as "keep in db".        
 - If the query is answerable directly from the FAQ context, provide the answer using the context.
@@ -302,6 +305,16 @@ Output (YES or NO):
             return "This answer will be provided in the future."
         else:
             return "It is not related to the document."
+        
+    elif "greeting" in classification_response:
+        greeting_prompt = f"""
+        Answer the general user query based on the conversation history, provided
+        If the conversation history is empty, provide a general response.
+        User Query: {query}
+        Chat History: {history}
+        """
+        return model.generate_content(greeting_prompt).text
+    
     elif "needs web search" in classification_response:
         modified_query = modify_query_for_web(query, summary)
         web_answer = get_web_answer(modified_query)
@@ -439,7 +452,8 @@ def main_app():
             
             except Exception as e:
                 st.warning("The Pinecone API key entered does not have the File uploaded, please use the respective API used when uploading the file")    
-
+                # st.error(f"Error: {e}")
+                
 if not st.session_state['logged_in']:
     show_login_signup()
 
